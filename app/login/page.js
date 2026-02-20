@@ -10,17 +10,13 @@ export default function Login() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     const res = await fetch("/api/auth/login", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ phone, password }),
     });
 
     const data = await res.json();
-
     if (data.token) {
       localStorage.setItem("token", data.token);
       router.push("/dashboard");
@@ -30,146 +26,207 @@ export default function Login() {
   };
 
   return (
-    <div className="page-wrapper">
+    <div className="auth-container">
       <style jsx global>{`
-        body {
-          margin: 0;
-          background-color: #f3f4f6;
-          font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        :root {
+          --brand-gold: #ffb300;
+          --brand-brown: #3e2723;
+          --bg-cream: #fdfaf7;
         }
 
-        .page-wrapper {
+        body {
+          margin: 0;
+          background-color: var(--bg-cream);
+          font-family: 'Inter', -apple-system, sans-serif;
+        }
+
+        .auth-container {
+          display: flex;
+          min-height: 100vh;
+        }
+
+        /* Branding Side */
+        .side-panel {
+          flex: 1;
+          background: var(--brand-brown);
+          display: flex;
+          flex-direction: column;
+          justify-content: center;
+          padding: 60px;
+          color: white;
+        }
+
+        .side-panel h1 {
+          font-size: 3rem;
+          color: var(--brand-gold);
+          margin-bottom: 20px;
+          letter-spacing: -0.05em;
+        }
+
+        .side-panel p {
+            font-size: 1.2rem;
+            line-height: 1.6;
+            opacity: 0.9;
+            max-width: 400px;
+        }
+
+        /* Form Side */
+        .form-side {
+          flex: 1.2;
           display: flex;
           justify-content: center;
           align-items: center;
-          min-height: 100vh;
-          padding: 20px;
+          padding: 40px;
+          background: white;
         }
 
-        .card {
-          background: white;
-          padding: 2.5rem;
-          border-radius: 16px;
-          box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+        .form-card {
           width: 100%;
           max-width: 400px;
         }
 
         h2 {
-          color: #111827;
-          font-size: 1.75rem;
+          color: var(--brand-brown);
+          font-size: 2.2rem;
           font-weight: 800;
-          margin-bottom: 0.5rem;
-          text-align: center;
-          letter-spacing: -0.025em;
+          margin-bottom: 12px;
+          letter-spacing: -0.04em;
         }
 
         .subtitle {
-          color: #6b7280;
-          text-align: center;
-          margin-bottom: 2rem;
-          font-size: 0.95rem;
+          color: #6d4c41;
+          margin-bottom: 40px;
+          font-size: 1.1rem;
         }
 
-        .form-group {
-          display: flex;
-          flex-direction: column;
-          gap: 1.2rem;
+        .input-group {
+          margin-bottom: 24px;
+        }
+
+        .input-group label {
+          display: block;
+          font-size: 0.8rem;
+          font-weight: 700;
+          text-transform: uppercase;
+          letter-spacing: 0.1em;
+          margin-bottom: 8px;
+          color: var(--brand-brown);
         }
 
         input {
           width: 100%;
-          padding: 14px;
-          border: 1px solid #d1d5db;
-          border-radius: 10px;
+          padding: 16px;
+          border: 1.5px solid #e0e0e0;
+          border-radius: 8px;
           font-size: 1rem;
-          outline: none;
           transition: all 0.2s ease;
+          box-sizing: border-box;
         }
 
         input:focus {
-          border-color: #2563eb;
-          box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
+          outline: none;
+          border-color: var(--brand-gold);
+          box-shadow: 0 0 0 4px rgba(255, 179, 0, 0.1);
         }
 
-        button {
+        .submit-btn {
           width: 100%;
-          background-color: #2563eb;
-          color: white;
-          padding: 14px;
+          padding: 18px;
+          background: var(--brand-gold);
+          color: var(--brand-brown);
           border: none;
-          border-radius: 10px;
+          border-radius: 8px;
           font-size: 1rem;
-          font-weight: 600;
+          font-weight: 700;
           cursor: pointer;
-          margin-top: 0.5rem;
-          transition: background-color 0.2s;
+          transition: all 0.2s;
+          margin-top: 8px;
         }
 
-        button:hover {
-          background-color: #1d4ed8;
+        .submit-btn:hover {
+          background: #ffa000;
+          transform: translateY(-1px);
+          box-shadow: 0 4px 12px rgba(255, 179, 0, 0.2);
         }
 
-        .footer-text {
-          margin-top: 1.5rem;
+        .footer {
+          margin-top: 32px;
           text-align: center;
-          font-size: 0.9rem;
-          color: #4b5563;
+          color: #6d4c41;
         }
 
-        .register-link {
-          color: #2563eb;
+        .footer a {
+          color: var(--brand-brown);
+          font-weight: 800;
           text-decoration: none;
-          font-weight: 600;
+          border-bottom: 2px solid var(--brand-gold);
+          padding-bottom: 2px;
           margin-left: 5px;
         }
 
-        .register-link:hover {
-          text-decoration: underline;
+        /* RESPONSIVE */
+        @media (max-width: 900px) {
+          .side-panel { display: none; }
+          .form-side { background: var(--bg-cream); }
+          .form-card {
+              background: white;
+              padding: 40px;
+              border-radius: 16px;
+              box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+          }
         }
 
         @media (max-width: 480px) {
-          .card {
-            padding: 1.5rem;
-            box-shadow: none;
-            background: transparent;
-          }
-          body {
-            background-color: white;
-          }
+            .form-side { padding: 20px; }
+            .form-card { padding: 30px 20px; border-radius: 0; box-shadow: none; background: transparent; }
+            h2 { font-size: 1.8rem; }
         }
       `}</style>
 
-      <div className="card">
-        <h2>Welcome Back</h2>
-        <p className="subtitle">Login to manage your SokoDirect shop.</p>
-
-        <form onSubmit={handleSubmit} className="form-group">
-          <input
-            type="text"
-            placeholder="Phone Number"
-            value={phone}
-            onChange={(e) => setPhone(e.target.value)}
-            required
-          />
-
-          <input
-            type="password"
-            placeholder="Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-          />
-
-          <button type="submit">Login</button>
-        </form>
-
-        <p className="footer-text">
-          Don't have an account? 
-          <Link href="/register" className="register-link">
-            Register
-          </Link>
+      <div className="side-panel">
+        <h1>SokoDirect</h1>
+        <p>
+          Welcome back to Kenya's leading shop management partner. 
+          Your data, your growth, your future.
         </p>
+      </div>
+
+      <div className="form-side">
+        <div className="form-card">
+          <h2>Welcome Back</h2>
+          <p className="subtitle">Login to access your dashboard.</p>
+
+          <form onSubmit={handleSubmit}>
+            <div className="input-group">
+              <label>Phone Number</label>
+              <input
+                type="text"
+                placeholder="07xx xxx xxx"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                required
+              />
+            </div>
+
+            <div className="input-group">
+              <label>Password</label>
+              <input
+                type="password"
+                placeholder="••••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+            </div>
+
+            <button type="submit" className="submit-btn">Sign In</button>
+          </form>
+
+          <div className="footer">
+            New to SokoDirect? 
+            <Link href="/register">Register Shop</Link>
+          </div>
+        </div>
       </div>
     </div>
   );
