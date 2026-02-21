@@ -1,133 +1,104 @@
 "use client";
+
 import { useEffect, useState } from "react";
 
 export default function SalesPage() {
-  const [sales, setSales] = useState([]);
-  const [form, setForm] = useState({
-    amount: "",
-    date: new Date().toISOString().split("T")[0],
-    category: "Retail",
-    paymentMethod: "Cash",
-    notes: "",
-  });
+  const [sales, setSales] = useState([]); // ✅ always array
+  const [amount, setAmount] = useState("");
+  const [category, setCategory] = useState("");
+  const [paymentMethod, setPaymentMethod] = useState("Cash");
+  const [notes, setNotes] = useState("");
+  const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
 
-  const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
-
-  const fetchSales = async () => {
-    const res = await fetch("/api/sales", {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-    const data = await res.json();
-    setSales(data);
-  };
-
+  // ✅ Load sales safely
   useEffect(() => {
-    fetchSales();
+    const stored = localStorage.getItem("sales");
+    if (stored) {
+      try {
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed)) {
+          setSales(parsed);
+        } else {
+          setSales([]);
+        }
+      } catch {
+        setSales([]);
+      }
+    }
   }, []);
 
-  const handleSubmit = async (e) => {
+  // ✅ Save sales safely
+  useEffect(() => {
+    localStorage.setItem("sales", JSON.stringify(sales));
+  }, [sales]);
+
+  const handleAddSale = (e) => {
     e.preventDefault();
 
-    await fetch("/api/sales", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({
-        ...form,
-        amount: Number(form.amount),
-      }),
-    });
+    if (!amount) return;
 
-    setForm({
-      amount: "",
-      date: new Date().toISOString().split("T")[0],
-      category: "Retail",
-      paymentMethod: "Cash",
-      notes: "",
-    });
+    const newSale = {
+      id: Date.now(),
+      amount: Number(amount),
+      category,
+      paymentMethod,
+      notes,
+      date,
+    };
 
-    fetchSales();
+    setSales((prev) => [...prev, newSale]);
+
+    // Reset form
+    setAmount("");
+    setCategory("");
+    setNotes("");
+    setPaymentMethod("Cash");
+    setDate(new Date().toISOString().split("T")[0]);
   };
 
-  const deleteSale = async (id) => {
-    await fetch("/api/sales", {
-      method: "DELETE",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({ id }),
-    });
-
-    fetchSales();
+  const handleDelete = (id) => {
+    setSales((prev) => prev.filter((sale) => sale.id !== id));
   };
 
-  // 📊 Summary Calculations
-  const today = new Date().toDateString();
-
-  const todayTotal = sales
-    .filter(s => new Date(s.date).toDateString() === today)
-    .reduce((sum, s) => sum + s.amount, 0);
-
-  const month = new Date().getMonth();
-  const year = new Date().getFullYear();
-
-  const monthTotal = sales
-    .filter(s => {
-      const d = new Date(s.date);
-      return d.getMonth() === month && d.getFullYear() === year;
-    })
-    .reduce((sum, s) => sum + s.amount, 0);
-
-  const avgDaily = sales.length
-    ? (monthTotal / new Date().getDate()).toFixed(2)
-    : 0;
+  // ✅ Safe reduce (never crashes)
+  const total = sales.reduce((sum, sale) => {
+    return sum + Number(sale.amount || 0);
+  }, 0);
 
   return (
-    <div>
-      <h1>Sales Management</h1>
-
-      {/* Summary */}
-      <div style={styles.summary}>
-        <div>Today: KES {todayTotal}</div>
-        <div>This Month: KES {monthTotal}</div>
-        <div>Total Transactions: {sales.length}</div>
-        <div>Avg Daily: KES {avgDaily}</div>
-      </div>
+    <div style={styles.container}>
+      <h1 style={styles.title}>Sales Management</h1>
 
       {/* Add Sale Form */}
-      <form onSubmit={handleSubmit} style={styles.form}>
+      <form onSubmit={handleAddSale} style={styles.form}>
         <input
           type="number"
           placeholder="Amount"
-          value={form.amount}
+          value={amount}
+          onChange={(e) => setAmount(e.target.value)}
           required
-          onChange={(e) => setForm({ ...form, amount: e.target.value })}
+          style={styles.input}
         />
 
         <input
           type="date"
-          value={form.date}
-          required
-          onChange={(e) => setForm({ ...form, date: e.target.value })}
+          value={date}
+          onChange={(e) => setDate(e.target.value)}
+          style={styles.input}
+        />
+
+        <input
+          type="text"
+          placeholder="Category"
+          value={category}
+          onChange={(e) => setCategory(e.target.value)}
+          style={styles.input}
         />
 
         <select
-          value={form.category}
-          onChange={(e) => setForm({ ...form, category: e.target.value })}
-        >
-          <option>Retail</option>
-          <option>Wholesale</option>
-          <option>Service</option>
-        </select>
-
-        <select
-          value={form.paymentMethod}
-          onChange={(e) => setForm({ ...form, paymentMethod: e.target.value })}
+          value={paymentMethod}
+          onChange={(e) => setPaymentMethod(e.target.value)}
+          style={styles.input}
         >
           <option>Cash</option>
           <option>M-Pesa</option>
@@ -137,12 +108,21 @@ export default function SalesPage() {
         <input
           type="text"
           placeholder="Notes"
-          value={form.notes}
-          onChange={(e) => setForm({ ...form, notes: e.target.value })}
+          value={notes}
+          onChange={(e) => setNotes(e.target.value)}
+          style={styles.input}
         />
 
-        <button type="submit">Add Sale</button>
+        <button type="submit" style={styles.button}>
+          Add Sale
+        </button>
       </form>
+
+      {/* Summary */}
+      <div style={styles.summary}>
+        <h2>Total Revenue: KES {total.toLocaleString()}</h2>
+        <p>Total Transactions: {sales.length}</p>
+      </div>
 
       {/* Sales Table */}
       <table style={styles.table}>
@@ -157,18 +137,31 @@ export default function SalesPage() {
           </tr>
         </thead>
         <tbody>
-          {sales.map((sale) => (
-            <tr key={sale._id}>
-              <td>{new Date(sale.date).toLocaleDateString()}</td>
-              <td>KES {sale.amount}</td>
-              <td>{sale.category}</td>
-              <td>{sale.paymentMethod}</td>
-              <td>{sale.notes}</td>
-              <td>
-                <button onClick={() => deleteSale(sale._id)}>Delete</button>
+          {sales.length === 0 ? (
+            <tr>
+              <td colSpan="6" style={{ textAlign: "center" }}>
+                No sales recorded yet.
               </td>
             </tr>
-          ))}
+          ) : (
+            sales.map((sale) => (
+              <tr key={sale.id}>
+                <td>{sale.date}</td>
+                <td>KES {sale.amount}</td>
+                <td>{sale.category}</td>
+                <td>{sale.paymentMethod}</td>
+                <td>{sale.notes}</td>
+                <td>
+                  <button
+                    onClick={() => handleDelete(sale.id)}
+                    style={styles.deleteBtn}
+                  >
+                    Delete
+                  </button>
+                </td>
+              </tr>
+            ))
+          )}
         </tbody>
       </table>
     </div>
@@ -176,20 +169,44 @@ export default function SalesPage() {
 }
 
 const styles = {
-  summary: {
-    display: "flex",
-    gap: "30px",
+  container: {
+    padding: "30px",
+  },
+  title: {
     marginBottom: "20px",
-    fontWeight: "bold",
   },
   form: {
-    display: "flex",
+    display: "grid",
     gap: "10px",
     marginBottom: "30px",
-    flexWrap: "wrap",
+    maxWidth: "500px",
+  },
+  input: {
+    padding: "10px",
+    borderRadius: "5px",
+    border: "1px solid #ccc",
+  },
+  button: {
+    padding: "10px",
+    backgroundColor: "#0f172a",
+    color: "white",
+    border: "none",
+    borderRadius: "5px",
+    cursor: "pointer",
+  },
+  summary: {
+    marginBottom: "20px",
   },
   table: {
     width: "100%",
     borderCollapse: "collapse",
+  },
+  deleteBtn: {
+    padding: "5px 10px",
+    backgroundColor: "red",
+    color: "white",
+    border: "none",
+    borderRadius: "4px",
+    cursor: "pointer",
   },
 };
