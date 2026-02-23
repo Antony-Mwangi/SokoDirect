@@ -6,22 +6,41 @@ import Link from "next/link";
 export default function Login() {
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
+  // New state for feedback messages
+  const [status, setStatus] = useState({ type: "", message: "" });
+  const [loading, setLoading] = useState(false);
+  
   const router = useRouter();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const res = await fetch("/api/auth/login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ phone, password }),
-    });
+    setLoading(true);
+    setStatus({ type: "", message: "" }); // Reset messages
 
-    const data = await res.json();
-    if (data.token) {
-      localStorage.setItem("token", data.token);
-      router.push("/dashboard");
-    } else {
-      alert(data.error);
+    try {
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phone, password }),
+      });
+
+      const data = await res.json();
+
+      if (res.ok && data.token) {
+        localStorage.setItem("token", data.token);
+        setStatus({ type: "success", message: "Login successful! Redirecting..." });
+        
+        // Brief delay so the user can actually see the success message
+        setTimeout(() => {
+          router.push("/dashboard");
+        }, 1500);
+      } else {
+        setStatus({ type: "error", message: data.error || "Invalid credentials. Please try again." });
+      }
+    } catch (err) {
+      setStatus({ type: "error", message: "Something went wrong. Check your connection." });
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -32,6 +51,8 @@ export default function Login() {
           --brand-gold: #ffb300;
           --brand-brown: #3e2723;
           --bg-cream: #fdfaf7;
+          --error-red: #d32f2f;
+          --success-green: #2e7d32;
         }
 
         body {
@@ -40,12 +61,8 @@ export default function Login() {
           font-family: 'Inter', -apple-system, sans-serif;
         }
 
-        .auth-container {
-          display: flex;
-          min-height: 100vh;
-        }
+        .auth-container { display: flex; min-height: 100vh; }
 
-        /* Branding Side */
         .side-panel {
           flex: 1;
           background: var(--brand-brown);
@@ -56,53 +73,33 @@ export default function Login() {
           color: white;
         }
 
-        .side-panel h1 {
-          font-size: 3rem;
-          color: var(--brand-gold);
-          margin-bottom: 20px;
-          letter-spacing: -0.05em;
-        }
+        .side-panel h1 { font-size: 3rem; color: var(--brand-gold); margin-bottom: 20px; letter-spacing: -0.05em; }
+        .side-panel p { font-size: 1.2rem; line-height: 1.6; opacity: 0.9; max-width: 400px; }
 
-        .side-panel p {
-            font-size: 1.2rem;
-            line-height: 1.6;
-            opacity: 0.9;
-            max-width: 400px;
-        }
+        .form-side { flex: 1.2; display: flex; justify-content: center; align-items: center; padding: 40px; background: white; }
+        .form-card { width: 100%; max-width: 400px; }
 
-        /* Form Side */
-        .form-side {
-          flex: 1.2;
-          display: flex;
-          justify-content: center;
-          align-items: center;
-          padding: 40px;
-          background: white;
-        }
+        h2 { color: var(--brand-brown); font-size: 2.2rem; font-weight: 800; margin-bottom: 12px; }
+        .subtitle { color: #6d4c41; margin-bottom: 30px; font-size: 1.1rem; }
 
-        .form-card {
-          width: 100%;
-          max-width: 400px;
-        }
-
-        h2 {
-          color: var(--brand-brown);
-          font-size: 2.2rem;
-          font-weight: 800;
-          margin-bottom: 12px;
-          letter-spacing: -0.04em;
-        }
-
-        .subtitle {
-          color: #6d4c41;
-          margin-bottom: 40px;
-          font-size: 1.1rem;
-        }
-
-        .input-group {
+        /* Status Message Styles */
+        .status-msg {
+          padding: 12px 16px;
+          border-radius: 8px;
           margin-bottom: 24px;
+          font-size: 0.9rem;
+          font-weight: 500;
+          animation: fadeIn 0.3s ease;
+        }
+        .status-msg.error { background: #ffebee; color: var(--error-red); border: 1px solid #ffcdd2; }
+        .status-msg.success { background: #e8f5e9; color: var(--success-green); border: 1px solid #c8e6c9; }
+
+        @keyframes fadeIn {
+          from { opacity: 0; transform: translateY(-10px); }
+          to { opacity: 1; transform: translateY(0); }
         }
 
+        .input-group { margin-bottom: 24px; }
         .input-group label {
           display: block;
           font-size: 0.8rem;
@@ -119,15 +116,10 @@ export default function Login() {
           border: 1.5px solid #e0e0e0;
           border-radius: 8px;
           font-size: 1rem;
-          transition: all 0.2s ease;
           box-sizing: border-box;
         }
 
-        input:focus {
-          outline: none;
-          border-color: var(--brand-gold);
-          box-shadow: 0 0 0 4px rgba(255, 179, 0, 0.1);
-        }
+        input:focus { outline: none; border-color: var(--brand-gold); box-shadow: 0 0 0 4px rgba(255, 179, 0, 0.1); }
 
         .submit-btn {
           width: 100%;
@@ -140,61 +132,37 @@ export default function Login() {
           font-weight: 700;
           cursor: pointer;
           transition: all 0.2s;
-          margin-top: 8px;
         }
 
-        .submit-btn:hover {
-          background: #ffa000;
-          transform: translateY(-1px);
-          box-shadow: 0 4px 12px rgba(255, 179, 0, 0.2);
-        }
+        .submit-btn:disabled { opacity: 0.7; cursor: not-allowed; }
+        .submit-btn:hover:not(:disabled) { background: #ffa000; transform: translateY(-1px); }
 
-        .footer {
-          margin-top: 32px;
-          text-align: center;
-          color: #6d4c41;
-        }
+        .footer { margin-top: 32px; text-align: center; color: #6d4c41; }
+        .footer a { color: var(--brand-brown); font-weight: 800; text-decoration: none; border-bottom: 2px solid var(--brand-gold); margin-left: 5px; }
 
-        .footer a {
-          color: var(--brand-brown);
-          font-weight: 800;
-          text-decoration: none;
-          border-bottom: 2px solid var(--brand-gold);
-          padding-bottom: 2px;
-          margin-left: 5px;
-        }
-
-        /* RESPONSIVE */
         @media (max-width: 900px) {
           .side-panel { display: none; }
           .form-side { background: var(--bg-cream); }
-          .form-card {
-              background: white;
-              padding: 40px;
-              border-radius: 16px;
-              box-shadow: 0 10px 25px rgba(0,0,0,0.05);
-          }
-        }
-
-        @media (max-width: 480px) {
-            .form-side { padding: 20px; }
-            .form-card { padding: 30px 20px; border-radius: 0; box-shadow: none; background: transparent; }
-            h2 { font-size: 1.8rem; }
+          .form-card { background: white; padding: 40px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); }
         }
       `}</style>
 
       <div className="side-panel">
         <h1>SokoDirect</h1>
-        <p>
-          Welcome back to Kenya's leading shop management partner. 
-          Your data, your growth, your future.
-        </p>
+        <p>Welcome back to Kenyas leading shop management partner.</p>
       </div>
 
       <div className="form-side">
         <div className="form-card">
           <h2>Welcome Back</h2>
           <p className="subtitle">Login to access your dashboard.</p>
+
+          {/* Render success or error message here */}
+          {status.message && (
+            <div className={`status-msg ${status.type}`}>
+              {status.message}
+            </div>
+          )}
 
           <form onSubmit={handleSubmit}>
             <div className="input-group">
@@ -219,7 +187,9 @@ export default function Login() {
               />
             </div>
 
-            <button type="submit" className="submit-btn">Sign In</button>
+            <button type="submit" className="submit-btn" disabled={loading}>
+              {loading ? "Signing in..." : "Sign In"}
+            </button>
           </form>
 
           <div className="footer">
