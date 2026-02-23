@@ -19,6 +19,7 @@ export default function DashboardLayout({ children }) {
 
         <nav style={styles.nav}>
           <Link href="/dashboard" style={styles.link}>Overview</Link>
+          <Link href="/dashboard/products" style={styles.link}>Products</Link>
           <Link href="/dashboard/sales" style={styles.link}>Sales</Link>
           <Link href="/dashboard/analytics" style={styles.link}>Analytics</Link>
           <Link href="/dashboard/credit" style={styles.link}>Credit Score</Link>
