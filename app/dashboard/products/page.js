@@ -25,7 +25,6 @@ export default function ProductsPage() {
     fetchProducts();
   }, [search, category]);
 
-  /* ADD PRODUCT */
   const handleAdd = async () => {
     await fetch("/api/products", {
       method: "POST",
@@ -41,13 +40,11 @@ export default function ProductsPage() {
     fetchProducts();
   };
 
-  /* DELETE */
   const handleDelete = async (id) => {
     await fetch(`/api/products?id=${id}`, { method: "DELETE" });
     fetchProducts();
   };
 
-  /* RESTOCK */
   const handleRestock = async (id) => {
     const qty = prompt("Enter quantity to add:");
     if (!qty || qty <= 0) return;
@@ -64,7 +61,6 @@ export default function ProductsPage() {
     fetchProducts();
   };
 
-  /* EDIT */
   const handleEdit = async (product) => {
     const newPrice = prompt("Enter new price:", product.price);
     if (!newPrice) return;
@@ -81,124 +77,270 @@ export default function ProductsPage() {
     fetchProducts();
   };
 
-  const categories = [
-    "All",
-    ...new Set(products.map((p) => p.category)),
-  ];
+  const categories = ["All", ...new Set(products.map((p) => p.category))];
 
   return (
-    <div className="p-8 space-y-6">
-      <h1 className="text-2xl font-bold">Inventory Management</h1>
+    <>
+      <style>{`
+        * {
+          box-sizing: border-box;
+        }
 
-      {/* Search + Filter */}
-      <div className="flex gap-4">
-        <input
-          placeholder="Search product..."
-          className="border p-2 rounded w-1/3"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
+        body {
+          margin: 0;
+          font-family: Arial, Helvetica, sans-serif;
+          background-color: #f8f5f0;
+        }
 
-        <select
-          className="border p-2 rounded"
-          value={category}
-          onChange={(e) => setCategory(e.target.value)}
-        >
-          {categories.map((cat, i) => (
-            <option key={i}>{cat}</option>
-          ))}
-        </select>
+        .container {
+          padding: 40px 20px;
+          max-width: 1200px;
+          margin: auto;
+        }
+
+        h1 {
+          color: #3b2f2f;
+          margin-bottom: 30px;
+        }
+
+        /* Search + Filter */
+        .filters {
+          display: flex;
+          gap: 15px;
+          flex-wrap: wrap;
+          margin-bottom: 25px;
+        }
+
+        input, select {
+          padding: 10px;
+          border: 1px solid #c8b560;
+          border-radius: 6px;
+          outline: none;
+          min-width: 200px;
+        }
+
+        input:focus, select:focus {
+          border-color: #8b6f3d;
+        }
+
+        /* Form */
+        .form-card {
+          background: #ffffff;
+          padding: 20px;
+          border-radius: 10px;
+          box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+          gap: 15px;
+          margin-bottom: 30px;
+        }
+
+        .primary-btn {
+          background-color: #8b6f3d;
+          color: white;
+          border: none;
+          padding: 12px;
+          border-radius: 6px;
+          cursor: pointer;
+          transition: 0.3s;
+          font-weight: bold;
+        }
+
+        .primary-btn:hover {
+          background-color: #6e552e;
+        }
+
+        /* Table */
+        .table-wrapper {
+          overflow-x: auto;
+        }
+
+        table {
+          width: 100%;
+          border-collapse: collapse;
+          background: white;
+          border-radius: 10px;
+          overflow: hidden;
+          box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        }
+
+        thead {
+          background-color: #f1d879;
+        }
+
+        th, td {
+          padding: 14px;
+          text-align: left;
+          color: #2c2c2c;
+        }
+
+        th {
+          font-weight: bold;
+          color: #3b2f2f;
+        }
+
+        tr {
+          border-bottom: 1px solid #eee;
+        }
+
+        tr:hover {
+          background-color: #faf3d1;
+        }
+
+        .action-btn {
+          border: none;
+          padding: 6px 12px;
+          border-radius: 5px;
+          cursor: pointer;
+          font-size: 14px;
+          margin-right: 5px;
+          transition: 0.3s;
+        }
+
+        .edit-btn {
+          background-color: #3b2f2f;
+          color: white;
+        }
+
+        .edit-btn:hover {
+          background-color: black;
+        }
+
+        .restock-btn {
+          background-color: #f1c40f;
+          color: black;
+        }
+
+        .restock-btn:hover {
+          background-color: #d4ac0d;
+        }
+
+        .delete-btn {
+          background-color: #8b0000;
+          color: white;
+        }
+
+        .delete-btn:hover {
+          background-color: #5c0000;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+          .container {
+            padding: 20px 15px;
+          }
+
+          th, td {
+            padding: 10px;
+            font-size: 14px;
+          }
+
+          .action-btn {
+            margin-bottom: 5px;
+          }
+        }
+      `}</style>
+
+      <div className="container">
+        <h1>ProductManagement</h1>
+
+        <div className="filters">
+          <input
+            placeholder="Search product..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+
+          <select
+            value={category}
+            onChange={(e) => setCategory(e.target.value)}
+          >
+            {categories.map((cat, i) => (
+              <option key={i}>{cat}</option>
+            ))}
+          </select>
+        </div>
+
+        <div className="form-card">
+          <input
+            placeholder="Name"
+            value={form.name}
+            onChange={(e) => setForm({ ...form, name: e.target.value })}
+          />
+          <input
+            placeholder="Category"
+            value={form.category}
+            onChange={(e) => setForm({ ...form, category: e.target.value })}
+          />
+          <input
+            type="number"
+            placeholder="Stock"
+            value={form.stockQuantity}
+            onChange={(e) =>
+              setForm({ ...form, stockQuantity: e.target.value })
+            }
+          />
+          <input
+            type="number"
+            placeholder="Price"
+            value={form.price}
+            onChange={(e) =>
+              setForm({ ...form, price: e.target.value })
+            }
+          />
+
+          <button onClick={handleAdd} className="primary-btn">
+            Add Product
+          </button>
+        </div>
+
+        <div className="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Category</th>
+                <th>Stock</th>
+                <th>Price (KES)</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              {products.map((p) => (
+                <tr key={p._id}>
+                  <td>{p.name}</td>
+                  <td>{p.category}</td>
+                  <td>{p.stockQuantity}</td>
+                  <td>KES {p.price}</td>
+                  <td>
+                    <button
+                      onClick={() => handleEdit(p)}
+                      className="action-btn edit-btn"
+                    >
+                      Edit
+                    </button>
+
+                    <button
+                      onClick={() => handleRestock(p._id)}
+                      className="action-btn restock-btn"
+                    >
+                      Restock
+                    </button>
+
+                    <button
+                      onClick={() => handleDelete(p._id)}
+                      className="action-btn delete-btn"
+                    >
+                      Delete
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
-
-      {/* Add Product Form */}
-      <div className="bg-white p-4 rounded shadow grid grid-cols-4 gap-4">
-        <input
-          placeholder="Name"
-          className="border p-2 rounded"
-          value={form.name}
-          onChange={(e) =>
-            setForm({ ...form, name: e.target.value })
-          }
-        />
-        <input
-          placeholder="Category"
-          className="border p-2 rounded"
-          value={form.category}
-          onChange={(e) =>
-            setForm({ ...form, category: e.target.value })
-          }
-        />
-        <input
-          type="number"
-          placeholder="Stock"
-          className="border p-2 rounded"
-          value={form.stockQuantity}
-          onChange={(e) =>
-            setForm({ ...form, stockQuantity: e.target.value })
-          }
-        />
-        <input
-          type="number"
-          placeholder="Price"
-          className="border p-2 rounded"
-          value={form.price}
-          onChange={(e) =>
-            setForm({ ...form, price: e.target.value })
-          }
-        />
-        <button
-          onClick={handleAdd}
-          className="col-span-4 bg-green-600 text-white py-2 rounded"
-        >
-          Add Product
-        </button>
-      </div>
-
-      {/* Products Table */}
-      <table className="w-full bg-white shadow rounded">
-        <thead>
-          <tr className="bg-gray-100 text-left">
-            <th className="p-3">Name</th>
-            <th className="p-3">Category</th>
-            <th className="p-3">Stock</th>
-            <th className="p-3">Price</th>
-            <th className="p-3">Actions</th>
-          </tr>
-        </thead>
-
-        <tbody>
-          {products.map((p) => (
-            <tr key={p._id} className="border-t">
-              <td className="p-3">{p.name}</td>
-              <td className="p-3">{p.category}</td>
-              <td className="p-3">{p.stockQuantity}</td>
-              <td className="p-3">KES {p.price}</td>
-              <td className="p-3 space-x-2">
-                <button
-                  onClick={() => handleEdit(p)}
-                  className="bg-blue-500 text-white px-3 py-1 rounded"
-                >
-                  Edit
-                </button>
-
-                <button
-                  onClick={() => handleRestock(p._id)}
-                  className="bg-yellow-500 text-white px-3 py-1 rounded"
-                >
-                  Restock
-                </button>
-
-                <button
-                  onClick={() => handleDelete(p._id)}
-                  className="bg-red-600 text-white px-3 py-1 rounded"
-                >
-                  Delete
-                </button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+    </>
   );
 }
